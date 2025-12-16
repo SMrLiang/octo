@@ -85,6 +85,8 @@ class OctoModel:
         Omit images to run the language-conditioned model, and omit texts to run the
         goal-conditioned model.
         """
+        
+        
         assert goals is not None or texts is not None
         tasks = {"pad_mask_dict": {}}
         if goals is not None:

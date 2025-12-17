@@ -85,8 +85,6 @@ class OctoModel:
         Omit images to run the language-conditioned model, and omit texts to run the
         goal-conditioned model.
         """
-        
-        
         assert goals is not None or texts is not None
         tasks = {"pad_mask_dict": {}}
         if goals is not None:
@@ -294,7 +292,10 @@ class OctoModel:
         # shim for migrating from "tasks" to "task"
         if "tasks" in example_batch:
             example_batch["task"] = example_batch.pop("tasks")
-
+        # pyTree是JAX的一种嵌套数据结构
+        # jax.tree_map用于对 pyTree 中的每个元素应用函数, 类似于Python的map函数，但作用于整个嵌套数据结构。
+        # 获取每个元素的形状
+        # flax.core.pretty_repr格式化输出的方便
         logging.debug(
             "Model was trained with observations: %s",
             flax.core.pretty_repr(
@@ -303,6 +304,7 @@ class OctoModel:
         )
         logging.debug(
             "Model was trained with tasks: %s",
+            # jax.treemap -> Pytree, pretty_repr方法把PyTree格式化成可读字符串
             flax.core.pretty_repr(jax.tree_map(jnp.shape, example_batch["task"])),
         )
 
@@ -311,11 +313,13 @@ class OctoModel:
             tf.io.gfile.join(checkpoint_path, "dataset_statistics.json"), "r"
         ) as f:
             dataset_statistics = json.load(f)
+            # is_leaf: 告诉tree_map哪些节点算叶子，不必再往下递归
             dataset_statistics = jax.tree_map(
                 np.array, dataset_statistics, is_leaf=lambda x: not isinstance(x, dict)
             )
 
         # create model def (an OctoModule)
+        breakpoint()
         module = OctoModule.create(**config["model"])
         # infer params shape without actually doing any computation
 
@@ -344,7 +348,7 @@ class OctoModel:
             text_processor = ModuleSpec.instantiate(config["text_processor"])()
         else:
             text_processor = None
-
+        # 理解可能主要是便于继承
         return cls(
             module=module,
             params=params,
